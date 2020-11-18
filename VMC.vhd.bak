@@ -1,0 +1,273 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.all;
+USE IEEE.NUMERIC_STD.all;
+
+ENTITY VMC IS
+	PORT
+		( 
+			clock, reset, hard_reset, set, start, N, D, Q: IN STD_LOGIC; --NDQ
+			prod, funct : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+			finished : OUT STD_LOGIC;
+			runTotal0, runTotal1, runTotal2: OUT  STD_LOGIC_VECTOR(3 DOWNTO 0);
+			Total0, Total1, Total2: OUT  STD_LOGIC_VECTOR(3 DOWNTO 0);
+			change0, change1, change2: OUT  STD_LOGIC_VECTOR(3 DOWNTO 0)
+		);
+END VMC;
+
+ARCHITECTURE behaviour OF VMC IS
+
+	COMPONENT program_unit IS
+		PORT 
+			(
+				clock, reset, hard_reset, set, enable, N, D, Q: IN STD_LOGIC; 
+				product: IN STD_LOGIC_VECTOR(1 DOWNTO 0); 
+				data_mem: OUT STD_LOGIC_VECTOR(5 DOWNTO 0);
+				addr_out: OUT STD_LOGIC_VECTOR(1 DOWNTO 0); 
+				done, wen: OUT STD_LOGIC
+			); 
+	END COMPONENT;
+
+	COMPONENT SRAM IS
+		PORT
+			(
+				address		: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
+				clock		: IN STD_LOGIC  := '1';
+				data		: IN STD_LOGIC_VECTOR (5 DOWNTO 0);
+				rden		: IN STD_LOGIC  := '1';
+				wren		: IN STD_LOGIC;
+				q		: OUT STD_LOGIC_VECTOR (5 DOWNTO 0)
+			);
+	END COMPONENT;
+	
+	COMPONENT vend_unit IS
+		PORT 
+			(
+				clock, reset, enable, N, D ,Q: IN STD_LOGIC;
+				price_in: IN STD_LOGIC_VECTOR(5 DOWNTO 0); 
+				change: OUT STD_LOGIC_VECTOR(5 DOWNTO 0);
+				insert_out: OUT STD_LOGIC_VECTOR(5 DOWNTO 0); 
+				done: OUT STD_LOGIC
+			); 
+	END COMPONENT;
+	
+	COMPONENT convert2bcd IS
+		PORT
+			(
+				binary : IN STD_LOGIC_VECTOR(7 DOWNTO 0); 
+				bcd: OUt STD_LOGIC_VECTOR(11 DOWNTO 0)
+			);  
+	END COMPONENT;
+
+TYPE STATE_TYPE IS (idle, program, display, vending, free);
+	SIGNAL nextState, currentState: STATE_TYPE;
+	SIGNAL writesig, rensig, wrensig, enVend, enProg: STD_LOGIC; 
+	SIGNAL addrSig, addr: STD_LOGIC_VECTOR(1 DOWNTO 0);
+	SIGNAL priceSig, dataSig, accum_Sig, changeSig: STD_LOGIC_VECTOR(5 DOWNTO 0);
+	SIGNAL z_in, binary_in, convert_change, convert_insert : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL runTotalSig, TotalSig, convert_change_out, convert_insert_out: STD_LOGIC_VECTOR(11 DOWNTO 0);
+	SIGNAL coins: UNSIGNED (2 DOWNTO 0):="000";
+	SIGNAL count, aout: UNSIGNED (5 DOWNTO 0):="000000"; 
+	SIGNAL vendExit, programExit : STD_LOGIC;
+--	SIGNAL stateFinished : STD_LOGIC;
+BEGIN
+
+MEMORY: SRAM 
+	PORT MAP ( clock => clock, address => addr, data => dataSig, wren => wrensig, rden => rensig, q => priceSig );
+
+STATE_PROGRAM: program_unit
+	PORT MAP(clock => clock, reset => reset, hard_reset => hard_reset, set => set, enable => enProg, N => N, D => D, Q => Q, 
+				product => prod, data_mem => dataSig, addr_out => addrSig, done => programExit, wen => writeSig); 
+
+vending3: vend_unit
+	PORT MAP(clock => clock, reset => reset, enable => enVend, N => N, D => D, Q => Q,
+				price_in => priceSig , change => changeSig, insert_out => accum_sig, done => vendExit);
+				
+convert : convert2bcd
+	PORT MAP(binary => binary_in, bcd => runTotalSig);
+	
+convert1 : convert2bcd
+	PORT MAP(binary => z_in, bcd => TotalSig);	
+
+convertchange: convert2bcd 
+	PORT MAP(binary => convert_change, bcd => convert_change_out);
+
+convertinsert: convert2bcd 
+	PORT MAP(binary => convert_insert, bcd => convert_insert_out);
+	
+	
+
+	PROCESS(currentState, funct, vendExit, programExit, set,  priceSig, dataSig) --addrsig,
+	BEGIN
+		
+	--Idle state: Depends on funct to switch to a different state
+		CASE currentState IS
+			WHEN idle =>
+				enProg <= '0';
+				enVend <= '0';	
+				wrensig <= '0';
+				change0 <= (OTHERS => '0');
+				runTotal0 <= (OTHERS => '0');
+				total0 <= (OTHERS => '0');	
+			
+				change1 <= (OTHERS => '0');
+				runTotal1 <= (OTHERS => '0');
+				total1 <= (OTHERS => '0');	
+				
+				change2 <= (OTHERS => '0');
+				runTotal2 <= (OTHERS => '0');
+				total2 <= (OTHERS => '0');	
+				
+				IF (funct = "00") THEN
+					nextState <= program;
+					 							
+				ELSIF (funct = "01") THEN
+					nextState <= display;
+					
+				ELSIF (funct = "10") THEN
+					nextState <= vending;
+					
+				ELSIF (funct = "11") THEN
+					nextState <= free;
+					
+				END IF;
+	
+	--Program state
+			WHEN program =>
+				enProg <= '1'; 
+				wrensig <= writeSig; 
+--				addrSig <= prod;
+				renSig <= '0'; 
+				
+				IF (set = '1') THEN
+					addr <= prod;
+					Z_in <= STD_LOGIC_VECTOR(resize((UNSIGNED("00" & dataSig) * 5),8));
+					total0 <= totalSig(11 DOWNTO 8);
+					total1 <= totalSig(7 DOWNTO 4);
+					total2 <= totalSig(3 DOWNTO 0);
+				END IF;
+				
+				
+				IF (programExit = '1') THEN
+					nextState <= idle;
+ 									
+				END IF;
+	
+	--Display state		
+			WHEN display =>
+				renSig <= '1';
+
+				IF (prod = "00" OR prod = "01" OR prod = "10" OR prod = "11") THEN
+					nextState <= display;
+					z_in <= STD_LOGIC_VECTOR(resize((UNSIGNED("00" & dataSig) * 5),8));
+					total0 <= totalSig(11 DOWNTO 8);
+					total1 <= totalSig(7 DOWNTO 4);
+					total2 <= totalSig(3 DOWNTO 0);
+					
+					
+--					ELSIF (prod = "01") THEN
+--						nextState <= display;
+--						total <= priceSig;
+--						stateFinished <= '1';
+--						
+--					ELSIF (prod = "10") THEN
+--						nextState <= display;
+--						total <= priceSig;
+--						stateFinished <= '1';
+--						
+--					ELSIF (prod = "11") THEN 
+--						nextState <= display;
+--						total <= priceSig;
+--						stateFinished <= '1';
+					IF ((Q = '1') OR (D = '1') OR (N = '1')) THEN	--NDQ STARTS INCREASING, VENDING SHOULD START UP
+						nextState <= vending;
+					END IF;
+				END IF;
+				
+				
+				
+	--Vending  Mode
+			WHEN vending => 
+--			 						ONCE NDQ INCREASES IN display/idle MODE -> NEXT CLOCK CYCLE = VENDING. STAYS IN VENDING UNTIL "FINISHED". 
+--									IF RESET, RETURNS CHANGE AND THEN idle.
+				
+				enVend <= '1';
+				renSig <= '1';
+--				addrSig <= prod;
+				Z_in <= STD_LOGIC_VECTOR(resize((UNSIGNED("00" & priceSig) * 5),8));
+				total0 <= totalSig(11 DOWNTO 8);
+				total1 <= totalSig(7 DOWNTO 4);
+				total2 <= totalSig(3 DOWNTO 0);
+				
+
+				
+				IF (reset = '1') THEN
+					IF (changeSig = "000000") THEN
+						nextState <= idle;
+					
+					END IF;
+					
+				ELSIF (vendExit = '1') THEN
+					nextState <= idle;	
+					
+					
+				ELSE 
+					nextState <= vending;
+					convert_change <= STD_LOGIC_VECTOR(resize((UNSIGNED("00" & changeSig) * 5),8));
+					convert_insert <=  STD_LOGIC_VECTOR(resize((UNSIGNED("00" & accum_sig) * 5),8));
+					binary_in <= STD_LOGIC_VECTOR(resize((UNSIGNED("00" & dataSig) * 5),8));
+					runTotal0 <= runtotalSig(11 DOWNTO 8);
+					runTotal1 <= runtotalSig(7 DOWNTO 4);
+					runTotal2 <= runtotalSig(3 DOWNTO 0);
+					
+				END IF;
+				
+	--Free state 
+			WHEN free => 
+--									HAVE TO MAKE SURE TO RETURN ALL CHANGE!
+
+				IF (funct = "11") THEN
+					nextState <= free;
+					enVend <= '1';
+					change0 <= (OTHERS => 'Z');
+					runTotal0 <= (OTHERS => 'Z');
+					total0 <= (OTHERS => 'Z');	
+				
+					change1 <= (OTHERS => 'Z');
+					runTotal1 <= (OTHERS => 'Z');
+					total1 <= (OTHERS => 'Z');	
+					
+					change2 <= (OTHERS => 'Z');
+					runTotal2 <= (OTHERS => 'Z');
+					total2 <= (OTHERS => 'Z');	
+					
+					priceSig <= (OTHERS => 'Z');
+					
+				
+				ELSIF (vendExit = '1') THEN
+					nextState <= idle;
+					
+				END IF;		
+		END CASE;
+	END PROCESS;
+	
+	
+	
+	PROCESS(clock, start, reset)
+	BEGIN
+		IF (start = '1') THEN
+			IF (reset = '1') THEN
+				currentState <= idle;
+				
+			ELSIF (rising_edge(clock)) THEN
+				currentState <= nextState;
+				
+			END IF;
+		
+		ELSE
+			currentState <= idle;
+			
+		END IF;
+	END PROCESS;
+		
+END behaviour;
+

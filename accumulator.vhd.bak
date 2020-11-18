@@ -1,0 +1,38 @@
+library ieee; 
+use ieee.std_logic_1164.all; 
+use ieee.numeric_std.all;
+
+entity accumulator is 
+	port (clock, reset, en, N, D, Q: in std_logic; 
+	accum_out: out unsigned); 
+end accumulator; 
+
+architecture behaviour of accumulator is 
+
+signal Ncount, Dcount, Qcount: unsigned; 
+
+--look into how to code a counter properly
+--decide on a bit width 
+if rising_edge(clk) then 
+ 
+ if en = '1' then 
+	if N = '1' then 
+		Ncount = Ncount +1; 
+		
+	elsif D = '1' then 
+		Dcount = Dcount +1; 
+		
+	elsif Q = '1' then 
+		Qcount = Qcount +1; 
+		
+	end if; 
+	
+	end if; 
+end if; 
+
+	--perform all operations on Ncount, Dcount, Qcount and assign to 
+
+
+
+
+end behaviour; 

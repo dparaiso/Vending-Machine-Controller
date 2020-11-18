@@ -1,0 +1,22 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.all;
+USE IEEE.NUMERIC_STD.all;
+
+ENTITY convert2bcd is 
+	PORT(binary : IN STD_LOGIC_VECTOR(7 DOWNTO 0); 
+			bcd: OUt STD_LOGIC_VECTOR(11 DOWNTO 0)); 
+END convert2bcd; 
+
+ARCHITECTURE behaviour of convert2bcd is
+
+COMPONENT add3 is 
+	PORT( A : IN STD_LOGIC_VECTOR(3 DOWNTO 0); 
+			S : OUt STD_LOGIC_VECTOR(3 DOWNTO 0)); 
+END COMPONENT; 
+
+	SIGNAL Sout1, Sout2, Sout3, Sout4, Sout5, Sout6, Sout7,: STD_LOGIC_VECTOR(3 DOWNTO 0); 
+	
+	firstadd: add3 PORT MAP (A => '0' & binary(7 DOWNTO 5), S => Sout1);
+	secondadd: add3 PORT MAP (A => Sout(3 DOWNTO 1) & binary(4), S => Sout2); 
+	
+end behaviour; 

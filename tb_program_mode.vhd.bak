@@ -1,0 +1,46 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.all;
+USE IEEE.NUMERIC_STD.all;
+
+ENTITY tb_program_mode is
+END tb_program_mode;
+
+ARCHITECTURE test OF tb_program_mode IS
+
+COMPONENT program_mode IS
+	PORT( clock, reset, hard_reset, set, start, stateFinished, N, D, Q: IN STD_LOGIC; --NDQ
+			prod, funct : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+			change, runTotal, total: OUT  STD_LOGIC_VECTOR(2 DOWNTO 0));
+END COMPONENT; 	
+
+SIGNAL clockSig, resetSig, hard_resetSig, setSig, enableSig, startSig, Nsig, Dsig, Qsig: STD_LOGIC; 
+SIGNAL prodsig, functsig: STD_LOGIC_VECTOR(1 DOWNTO 0); 
+SIGNAL changeSig, runSig, totalSig: STD_LOGIC_VECTOR(2 DOWNTO 0); 
+
+
+BEGIN 
+
+DUT: program_mode
+PORT MAP(clock => clockSig, reset => resetSig, hard_reset => hard_resetSig, set => setSig, 
+			enable => enableSig, start => startSig, stateFinished => finishedSig, N=> Nsig, D => Dsig, Q => Qsig,
+			prod => prodsig, funct =>funtSig, change => changeSig, runTotal => runSig, total => totalSig);
+
+
+--clk <='0'; 
+--resetSig <='0'; 
+--hard_resetSig <='0'; 
+--setSig <='0'; 
+--enableSig <='0'; 
+--startSig <='0'; 
+--Nsig <='0'; 
+--Dsig <='0'; 
+--Qsig <='0'; 
+--prodSig => "00";
+--functSig => "00";
+
+
+
+
+
+
+end test; 

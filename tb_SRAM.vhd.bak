@@ -1,0 +1,104 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.all;
+USE IEEE.NUMERIC_STD.all;
+
+ENTITY tb_SRAM is
+END tb_SRAM;
+
+ARCHITECTURE test OF tb_SRAM IS
+
+	COMPONENT SRAM IS
+	PORT
+	(
+		address	: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
+		clock		: IN STD_LOGIC  := '1';
+		data		: IN STD_LOGIC_VECTOR (5 DOWNTO 0);
+		rden		: IN STD_LOGIC  := '1';
+		wren		: IN STD_LOGIC ;
+		q			: OUT STD_LOGIC_VECTOR (5 DOWNTO 0)
+	);
+END COMPONENT;
+
+	SIGNAL clock, rdenSig, wrenSig: STD_LOGIC; 
+	SIGNAL addressSig: STD_LOGIC_VECTOR(1 DOWNTO 0);
+	SIGNAL dataSig, qSig: STD_LOGIC_VECTOR(5 DOWNTO 0):="ZZZZZZ"; 
+
+BEGIN
+
+DUT : SRAM
+	PORT MAP(clock => clock, rden => rdenSig, wren => wrenSig, address => addressSig, data => dataSig, q => qSig);
+
+	
+--	00 - $0.50 001010
+--	01 - $1.25 011001
+--	10 - $2.10 101010
+--	11 - $2.55 110011
+
+	PROCESS IS
+	BEGIN
+
+		FOR z IN 0 TO 80 LOOP
+			IF z < 41 THEN
+				wrenSig <= 'Z';
+				rdenSig <= 'Z';
+				dataSig <= "ZZZZZZ";
+				addressSig <= "ZZ";
+				
+				IF z > 5 and z < 11 THEN  
+					wrensig <= '1'; 
+					datasig  <= "001010";
+					addressSig <= "00"; 
+					
+				ELSIF z > 14 and z < 21 THEN 
+					wrensig <= '1'; 
+					datasig  <= "011001";
+					addressSig <= "01"; 
+					
+				ELSIF z > 24 and z < 31 THEN 
+					wrensig <= '1';  
+					datasig  <= "101010";
+					addressSig <= "10"; 
+					
+				ELSIF z > 34 and z < 41 THEN 
+					wrensig <= '1'; 
+					datasig  <= "110011";
+					addressSig <= "11";
+					
+				END IF; 
+			ELSE 
+				wrenSig <= 'Z';
+				rdenSig <= 'Z';
+				dataSig <= "ZZZZZZ";
+				addressSig <= "ZZ";
+				
+				IF z > 40  and z < 46 THEN  
+					rdensig <= '1'; 
+					addressSig <= "00"; 
+					
+				ELSIF z > 50  and z < 56 THEN  
+					rdensig <= '1'; 
+					addressSig <= "01"; 
+					
+				ELSIF z > 60  and z < 66 THEN  
+					rdensig <= '1'; 
+					addressSig <= "10"; 
+				
+				ELSIF z > 70  and z < 76 THEN  
+					rdensig <= '1'; 
+					addressSig <= "11"; 
+					
+				END IF; 
+			
+
+			END IF;
+			
+			clock <= '1';
+			WAIT FOR 5 ns;
+			
+			clock <= '0';
+			WAIT FOR 5 ns;
+		
+		END LOOP;
+	
+	END PROCESS;
+END test;

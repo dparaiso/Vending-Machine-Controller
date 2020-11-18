@@ -1,0 +1,54 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.all;
+USE IEEE.NUMERIC_STD.all;
+
+ENTITY vend_unit IS
+	PORT (clock, reset, enable, price_in, N, D ,Q: IN STD_LOGIC; 
+			change, insert_out: OUT STD_LOGIC_VECTOR(5 DOWNTO 0);
+			done: OUT STD_LOGIC); 
+END vend_unit; 
+
+ARCHITECTURE behaviour of vend_unit is 
+
+COMPONENT convert2bcd IS 
+	PORT(binary : IN STD_LOGIC_VECTOR(7 DOWNTO 0); 
+			bcd: OUt STD_LOGIC_VECTOR(11 DOWNTO 0)); 
+END COMPONENT; 
+
+COMPONENT accumulator IS 
+	PORT(clock, reset, en, N, D, Q: IN STD_LOGIC; 
+			accum_out: OUT STD_LOGIC_VECTOR(5 DOWNTO 0)); 
+END COMPONENT; 
+
+
+accum: accumulator ( clock => clock, reset => reset, N => N, D=> D, Q => Q, en => enable, accumout => accumsig); 
+
+TYPE STATE_TYPE IS (idle, calculating, convert);
+SIGNAL currentState, nextState: STATE_TYPE;
+SIGNAL accumsig: STD_LOGIC_VECTOR (5 DOWNTO 0);
+
+PROCESS(price_in, accumsig, currentState) 
+BEGIN 
+
+	CASE currentState IS 
+		WHEN idle => 
+		WHEN calculating =>  
+		WHEN converting =>
+		
+	END CASE; 
+
+END PROCESS; 
+
+PROCESS(clock, reset)
+BEGIN 
+
+IF rising_edge(clock) THEN 
+	currentState <= nextState; 
+	
+
+
+END IF; 
+
+END PROCESS; 
+
+END behaviour; 

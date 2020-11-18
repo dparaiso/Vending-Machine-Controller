@@ -1,0 +1,15 @@
+library ieee; 
+use ieee.std_logic_1164.all; 
+use ieee.numeric_std.all;
+
+entity accumulator is 
+end accumulator; 
+
+architecture test of tb_accumulator is 
+
+component accumulator is 
+	port (clock, reset, en, N, D, Q: in std_logic; 
+	accum_out: out unsigned); 
+end component; 
+
+end test; 

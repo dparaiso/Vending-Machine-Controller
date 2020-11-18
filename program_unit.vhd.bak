@@ -1,0 +1,27 @@
+library ieee; 
+use ieee.std_logic_1164.all; 
+use ieee.numeric_std.all;
+
+entity program_unit is 
+	port (clock, reset, hard_reset, set, enable, product, NDQ: in std_logic; 
+			data_mem, addr_out, done, wen: out unsigned(14 downto 0)); 
+end program_unit; 
+
+architecture behaviour of 
+
+component accumulator 
+	port (clock, reset, en, N, D, Q: in std_logic; 
+			accum_out: out unsigned(14 downto 0)); 
+end component; 
+
+TYPE STATE_TYPE IS (idle, free);
+SIGNAL nextState, currentState: STATE_TYPE;
+
+signal Nsig, Dsig, Qsig: std_logic; 
+signal accumSig: unsigned(14 downto 0); 
+
+accumulate: accumulator port map(clock => clock, reset => reset, en=> enable, N => Nsig, D => Dsig, Q => Qsig, accum_out => accumSig); 
+
+
+
+end behaviour; 

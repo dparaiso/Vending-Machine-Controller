@@ -1,0 +1,112 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.all;
+USE IEEE.NUMERIC_STD.all;
+
+ENTITY tb_program_unit IS
+	GENERIC(N : integer := 5);
+END tb_program_unit;
+
+ARCHITECTURE test OF tb_program_unit IS
+
+SIGNAL clockSig, resetSig, hard_resetSig, setSig, enableSig, Nsig, Dsig, Qsig, doneSig, wenSig: STD_LOGIC;
+SIGNAL productSig : UNSIGNED(1 DOWNTO 0);
+SIGNAL data_memSig, addr_outSig : UNSIGNED(5 DOWNTO 0);
+
+
+COMPONENT program_unit IS
+	PORT (clock, reset, hard_reset, set, enable, N, D, Q: IN STD_LOGIC;
+			product : IN UNSIGNED(1 DOWNTO 0);
+			data_mem, addr_out: OUT UNSIGNED(5 DOWNTO 0);
+			done, wen : OUT STD_LOGIC); 
+END COMPONENT; 
+
+BEGIN
+
+	DUT: program_unit
+		PORT MAP(clock => clockSig, reset => resetSig, hard_reset => hard_resetSig, set => setSig, 
+					enable => enableSig, product => productSig, N => Nsig, D => Dsig, Q => Qsig,
+					done => doneSig, wen => wenSig, addr_out => addr_outSig, data_mem => data_memSig);
+
+-- Template:
+		
+--	clockSig <= '';
+--	resetSig <= '';
+--	hard_resetSig <= '';
+--	setSig <= '';
+--	enableSig <= '';
+--	product <= '';
+--	Nsig <= '';
+--	Dsig <= '';
+--	Qsig <= '';
+--	WAIT FOR 20 ns;
+--	WAIT UNTIL 'SIGNAL' = "###";
+	
+	
+	PROCESS IS
+	BEGIN
+	
+	-- CHECK FOR ALL CASES OF SOFT RESET (reset only affects Accumulator)
+	
+	clockSig <= '0';
+	resetSig <= '1';
+	hard_resetSig <= '0';
+	setSig <= '0';
+	enableSig <= '0';
+	productSig <= "--";
+	Nsig <= '0';
+	Dsig <= '0';
+	Qsig <= '0';
+	WAIT FOR 10 ns;
+	
+	clockSig <= '1';
+	resetSig <= '1';
+	hard_resetSig <= '0';
+	setSig <= '0';
+	enableSig <= '0';
+	productSig <= "--";
+	Nsig <= '0';
+	Dsig <= '0';
+	Qsig <= '0';
+	WAIT FOR 10 ns;
+	
+	clockSig <= '0';
+	resetSig <= '1';
+	hard_resetSig <= '0';
+	setSig <= '0';
+	enableSig <= '1';
+	productSig <= "--";
+	Nsig <= '1';
+	Dsig <= '0';
+	Qsig <= '1';
+	WAIT FOR 10 ns;
+	
+	clockSig <= '1';
+	resetSig <= '1';
+	hard_resetSig <= '0';
+	setSig <= '0';
+	enableSig <= '1';
+	productSig <= "--";
+	Nsig <= '1';
+	Dsig <= '1';
+	Qsig <= '1';
+	WAIT FOR 10 ns;
+	
+	
+	-- CHECK  
+	
+	END PROCESS;	
+END test;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
